@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     app_version: str = "0.1.0"
     environment: str = "development"
     frontend_url: str = "http://localhost:3000"
+    database_url: str = "postgresql+psycopg://jobiq:jobiq_dev_password@localhost:5432/jobiq"
 
     model_config = SettingsConfigDict(
         env_file=".env",
