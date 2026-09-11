@@ -6,3 +6,5 @@ alembic
 python-multipart
 pytest
 httpx
+python-jose[cryptography]
+email-validator
