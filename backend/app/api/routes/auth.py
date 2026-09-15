@@ -3,10 +3,19 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.security import hash_password
+from app.core.security import (
+    create_access_token,
+    hash_password,
+    verify_password,
+)
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.auth import UserRegister, UserResponse
+from app.schemas.auth import (
+    TokenResponse,
+    UserLogin,
+    UserRegister,
+    UserResponse,
+)
 
 
 router = APIRouter(
@@ -53,3 +62,32 @@ def register_user(
         )
 
     return user
+
+
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+)
+def login_user(
+    user_data: UserLogin,
+    db: Session = Depends(get_db),
+):
+    user = db.scalar(
+        select(User).where(User.email == user_data.email)
+    )
+
+    if not user or not verify_password(
+        user_data.password,
+        user.password_hash,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
+        )
+
+    access_token = create_access_token(str(user.id))
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+    }
