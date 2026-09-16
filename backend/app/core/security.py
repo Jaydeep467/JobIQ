@@ -4,6 +4,8 @@ from jose import jwt
 from pwdlib import PasswordHash
 
 from app.core.config import settings
+from fastapi import HTTPException, status
+from jose import JWTError, jwt
 
 
 password_hash = PasswordHash.recommended()
@@ -32,3 +34,27 @@ def create_access_token(subject: str) -> str:
         settings.jwt_secret_key,
         algorithm=settings.jwt_algorithm,
     )
+
+def decode_access_token(token: str) -> str:
+    try:
+        payload = jwt.decode(
+            token,
+            settings.jwt_secret_key,
+            algorithms=[settings.jwt_algorithm],
+        )
+
+        subject = payload.get("sub")
+
+        if subject is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication token",
+            )
+
+        return subject
+
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired authentication token",
+        )
