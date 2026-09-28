@@ -5,8 +5,8 @@ from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models.resume import Resume
 from app.models.user import User
+from app.services.pdf_service import extract_text_from_pdf
 from app.services.resume_service import save_resume_file
-
 
 router = APIRouter(
     prefix="/resumes",
@@ -25,9 +25,15 @@ async def upload_resume(
 ):
     try:
         file_path = await save_resume_file(file)
+        extracted_text = extract_text_from_pdf(file_path)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(exc),
         )
 
@@ -35,6 +41,7 @@ async def upload_resume(
         user_id=current_user.id,
         filename=file.filename or "resume.pdf",
         file_path=file_path,
+        extracted_text=extracted_text,
     )
 
     db.add(resume)
