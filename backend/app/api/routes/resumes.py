@@ -53,3 +53,56 @@ async def upload_resume(
         "filename": resume.filename,
         "created_at": resume.created_at,
     }
+
+
+@router.get("/")
+def list_resumes(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    resumes = (
+        db.query(Resume)
+        .filter(Resume.user_id == current_user.id)
+        .order_by(Resume.created_at.desc())
+        .all()
+    )
+
+    return [
+        {
+            "id": resume.id,
+            "filename": resume.filename,
+            "created_at": resume.created_at,
+        }
+        for resume in resumes
+    ]
+
+
+@router.get("/{resume_id}")
+def get_resume(
+    resume_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    resume = (
+        db.query(Resume)
+        .filter(
+            Resume.id == resume_id,
+            Resume.user_id == current_user.id,
+        )
+        .first()
+    )
+
+    if resume is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resume not found",
+        )
+
+    return {
+        "id": resume.id,
+        "filename": resume.filename,
+        "extracted_text": resume.extracted_text,
+        "created_at": resume.created_at,
+        "updated_at": resume.updated_at,
+    }
+
