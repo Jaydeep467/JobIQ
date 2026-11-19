@@ -157,3 +157,21 @@ def test_parse_resume_handles_empty_projects_section():
     result = parse_resume(resume_text)
 
     assert result["projects"] == []
+
+def test_parse_resume_extracts_project_with_pipe_separator():
+    resume_text = """
+    PROJECTS
+
+    SHOPFLOW | Full Stack E-Commerce Platform
+    React, TypeScript, Node.js, PostgreSQL
+    Built a full-stack e-commerce application.
+    """
+
+    result = parse_resume(resume_text)
+
+    projects = result["projects"]
+
+    assert len(projects) == 1
+    assert projects[0]["name"] == "SHOPFLOW"
+    assert projects[0]["subtitle"] == "Full Stack E-Commerce Platform"
+    assert "React" in projects[0]["technologies"]

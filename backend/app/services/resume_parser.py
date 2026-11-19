@@ -413,11 +413,11 @@ def parse_projects(projects_text: str) -> list[dict[str, str | list[str]]]:
             continue
 
         # Detect project headings
-        if "—" in line or "–" in line:
+        if "—" in line or "–" in line or "|" in line:
             if current_project:
                 projects.append(current_project)
 
-            parts = re.split(r"[—–]", line, maxsplit=1)
+            parts = re.split(r"[—–|]", line, maxsplit=1)
 
             current_project = {
                 "name": parts[0].strip(),
