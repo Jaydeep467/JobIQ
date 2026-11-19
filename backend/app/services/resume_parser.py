@@ -86,7 +86,12 @@ SECTION_ALIASES = {
 def normalize_text(text: str) -> str:
     """Normalize whitespace while preserving section line breaks."""
     text = text.replace("\r\n", "\n").replace("\r", "\n")
-    lines = [re.sub(r"[ \t]+", " ", line).strip() for line in text.split("\n")]
+
+    lines = [
+        re.sub(r"[ \t]+", " ", line).strip()
+        for line in text.split("\n")
+    ]
+
     return "\n".join(lines).strip()
 
 
@@ -174,21 +179,63 @@ def parse_education(education_text: str) -> list[dict[str, str | None]]:
             re.IGNORECASE,
         )
         
-        university_match = re.search(
-            r"\|\s*([^|\n]+?)\s*\|\s*GPA:",
-            entry,
-            re.IGNORECASE,
-        )
+        # university_match = re.search(
+        #     r"\|\s*([^|\n]+?)\s*\|\s*GPA:",
+        #     entry,
+        #     re.IGNORECASE,
+        # )
+                # Extract university from either pipe-separated or multiline formats.
+        university = None
+        lines = [line.strip() for line in entry.splitlines() if line.strip()]
+
+        for line in lines:
+            # Format: Degree | University | GPA: ...
+            if "|" in line:
+                parts = [part.strip() for part in line.split("|")]
+
+                for part in parts:
+                    if (
+                        part
+                        and not re.search(r"\bGPA\b", part, re.IGNORECASE)
+                        and not re.search(
+                            r"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
+                            r"\w*\s+\d{4}\b",
+                            part,
+                            re.IGNORECASE,
+                        )
+                    ):
+                        if part != degree_match.group(0).strip() if degree_match else True:
+                            university = part
+                            break
+
+                if university:
+                    break
+
+            # Format: degree and university on separate lines.
+            elif (
+                degree_match
+                and line != degree_match.group(0).strip()
+                and not re.search(r"\bGPA\b", line, re.IGNORECASE)
+                and not re.search(
+                    r"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
+                    r"\w*\s+\d{4}\b",
+                    line,
+                    re.IGNORECASE,
+                )
+            ):
+                university = line
+                break
 
         records.append(
             {
                 "degree": degree_match.group(0).strip()
                 if degree_match else None,
-                "university": (
-                    university_match.group(1).strip()
-                    if university_match
-                    else None
-                ),
+                # "university": (
+                #     university_match.group(1).strip()
+                #     if university_match
+                #     else None
+                # ),
+                "university": university,
                 "gpa": gpa_match.group(1).strip()
                 if gpa_match else None,
                 "dates": date_match.group(0).strip()
@@ -200,7 +247,7 @@ def parse_education(education_text: str) -> list[dict[str, str | None]]:
     return records
 
 
-def parse_experience(experience_text: str) -> list[dict[str, str | None]]:
+# def parse_experience(experience_text: str) -> list[dict[str, str | None]]:
     """Extract basic work experience entries from resume text."""
     if not experience_text.strip():
         return []
@@ -250,7 +297,103 @@ def parse_experience(experience_text: str) -> list[dict[str, str | None]]:
         entry["achievements"] = "\n".join(entry["achievements"])
 
     return entries
+def parse_experience(
+    experience_text: str,
+) -> list[dict[str, str | None]]:
+    """Extract work experience entries from resume text."""
 
+    if not experience_text.strip():
+        return []
+
+    lines = normalize_text(experience_text).splitlines()
+
+    entries = []
+    current_entry = None
+
+    date_pattern = re.compile(
+        r"(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
+        r"\w*\s+\d{4})\s*[–-]\s*"
+        r"(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
+        r"\w*\s+\d{4}|\d{4}|Present)",
+        re.IGNORECASE,
+    )
+
+    def parse_heading(heading: str, dates: str):
+        parts = [part.strip() for part in heading.split("|")]
+
+        if len(parts) < 2:
+            return None
+
+        company = parts[0]
+        title = parts[1]
+        location = parts[2] if len(parts) >= 3 else None
+
+        return {
+            "company": company,
+            "title": title,
+            "location": location,
+            "dates": dates,
+            "achievements": [],
+        }
+
+    i = 0
+
+    while i < len(lines):
+        line = lines[i].strip()
+
+        if not line:
+            i += 1
+            continue
+
+        # Format 1:
+        # Company | Title | Location
+        # Apr 2025 – Present
+        if i + 1 < len(lines):
+            next_line = lines[i + 1].strip()
+
+            if date_pattern.fullmatch(next_line):
+                new_entry = parse_heading(line, next_line)
+
+                if new_entry:
+                    if current_entry:
+                        entries.append(current_entry)
+
+                    current_entry = new_entry
+                    i += 2
+                    continue
+
+        # Format 2:
+        # Company | Title | Location | Apr 2025 – Present
+        date_match = date_pattern.search(line)
+
+        if date_match:
+            heading = line[:date_match.start()].strip().rstrip("|").strip()
+            dates = date_match.group(0).strip()
+
+            new_entry = parse_heading(heading, dates)
+
+            if new_entry:
+                if current_entry:
+                    entries.append(current_entry)
+
+                current_entry = new_entry
+                i += 1
+                continue
+
+        # If we're already inside a job, treat remaining lines
+        # as achievements until the next job heading.
+        if current_entry:
+            current_entry["achievements"].append(line)
+
+        i += 1
+
+    if current_entry:
+        entries.append(current_entry)
+
+    for entry in entries:
+        entry["achievements"] = "\n".join(entry["achievements"])
+
+    return entries
 
 def parse_resume(text: str) -> dict[str, Any]:
     """Produce an initial structured representation of a resume."""
