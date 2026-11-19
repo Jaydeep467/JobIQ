@@ -97,3 +97,63 @@ def test_parse_resume_handles_missing_sections():
     assert result["education"] == []
     assert result["experience"] == []
     assert isinstance(result["skills"], list)
+
+def test_parse_resume_extracts_projects():
+    resume_text = """
+    PROJECTS
+
+    LLM INFERENCE PIPELINE — GPU-Accelerated Serving
+    Python, PyTorch, CUDA, Flask
+    Engineered a GPU-accelerated LLM serving pipeline.
+    Reduced inference latency by 25%.
+
+    SHOPFLOW — Full Stack E-Commerce Platform
+    React, TypeScript, Node.js, PostgreSQL
+    Built a full-stack e-commerce application.
+    """
+
+    result = parse_resume(resume_text)
+
+    projects = result["projects"]
+
+    assert isinstance(projects, list)
+    assert len(projects) >= 2
+
+    assert "LLM INFERENCE PIPELINE" in projects[0]["name"]
+    assert "Python" in projects[0]["technologies"]
+
+    assert "SHOPFLOW" in projects[1]["name"]
+    assert "React" in projects[1]["technologies"]
+
+def test_parse_resume_handles_project_without_technologies():
+    resume_text = """
+    PROJECTS
+
+    PERSONAL PORTFOLIO — Web Application
+    Designed and built a personal portfolio website.
+    Added responsive layouts and animations.
+    """
+
+    result = parse_resume(resume_text)
+
+    projects = result["projects"]
+
+    assert len(projects) == 1
+    assert projects[0]["name"] == "PERSONAL PORTFOLIO"
+    assert projects[0]["technologies"] == []
+    assert "personal portfolio website" in projects[0]["description"].lower()
+
+def test_parse_resume_handles_empty_projects_section():
+    resume_text = """
+    PROJECTS
+
+    EXPERIENCE
+
+    Software Engineer | Company A
+    Jan 2024 – Present
+    Built software applications.
+    """
+
+    result = parse_resume(resume_text)
+
+    assert result["projects"] == []

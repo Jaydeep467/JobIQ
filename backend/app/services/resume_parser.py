@@ -395,6 +395,56 @@ def parse_experience(
 
     return entries
 
+def parse_projects(projects_text: str) -> list[dict[str, str | list[str]]]:
+    """Extract structured project information from resume text."""
+
+    if not projects_text.strip():
+        return []
+
+    lines = normalize_text(projects_text).splitlines()
+
+    projects = []
+    current_project = None
+
+    for line in lines:
+        line = line.strip()
+
+        if not line:
+            continue
+
+        # Detect project headings
+        if "—" in line or "–" in line:
+            if current_project:
+                projects.append(current_project)
+
+            parts = re.split(r"[—–]", line, maxsplit=1)
+
+            current_project = {
+                "name": parts[0].strip(),
+                "subtitle": parts[1].strip() if len(parts) > 1 else "",
+                "technologies": [],
+                "description": [],
+            }
+
+        elif current_project:
+            # Detect technology stack
+            if "," in line and len(line.split(",")) >= 2:
+                current_project["technologies"] = [
+                    tech.strip() for tech in line.split(",")
+                ]
+
+            else:
+                current_project["description"].append(line)
+
+    if current_project:
+        projects.append(current_project)
+
+    # Convert descriptions into strings
+    for project in projects:
+        project["description"] = "\n".join(project["description"])
+
+    return projects
+
 def parse_resume(text: str) -> dict[str, Any]:
     """Produce an initial structured representation of a resume."""
     if not text or not text.strip():
@@ -410,7 +460,7 @@ def parse_resume(text: str) -> dict[str, Any]:
             sections.get("education", "")
         ),
         "experience": parse_experience(sections.get("experience", "")),
-        "projects": sections.get("projects", ""),
+        "projects": parse_projects(sections.get("projects", "")),
         "certifications": sections.get("certifications", ""),
     }
 
