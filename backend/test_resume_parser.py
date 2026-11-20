@@ -1,6 +1,5 @@
 import pytest
-from app.services.resume_parser import parse_resume, normalize_text
-
+from app.services.resume_parser import parse_resume, normalize_text, extract_sections
 
 def test_normalize_text():
     text = "  Python   Developer \n\n React   Developer  "
@@ -239,3 +238,75 @@ def test_parse_resume_handles_empty_certifications_section():
     result = parse_resume(resume_text)
 
     assert result["certifications"] == []
+
+def test_parse_resume_recognizes_professional_experience_heading():
+    resume_text = """
+    PROFESSIONAL EXPERIENCE
+
+    Skyfarer Academy | Full Stack Software Engineer | San Diego, CA
+    Apr 2025 – Present
+    Built and maintained full-stack features.
+    """
+
+    result = parse_resume(resume_text)
+
+    assert len(result["experience"]) == 1
+    assert result["experience"][0]["company"] == "Skyfarer Academy"
+    assert result["experience"][0]["title"] == "Full Stack Software Engineer"
+
+def test_parse_resume_recognizes_work_experience_heading():
+    resume_text = """
+    WORK EXPERIENCE
+
+    Skyfarer Academy | Full Stack Software Engineer | San Diego, CA
+    Apr 2025 – Present
+    Built and maintained full-stack features.
+    """
+
+    result = parse_resume(resume_text)
+
+    assert len(result["experience"]) == 1
+    assert result["experience"][0]["company"] == "Skyfarer Academy"
+    assert result["experience"][0]["title"] == "Full Stack Software Engineer"
+
+def test_parse_resume_recognizes_employment_heading():
+    resume_text = """
+    EMPLOYMENT
+
+    Skyfarer Academy | Full Stack Software Engineer | San Diego, CA
+    Apr 2025 – Present
+    Built and maintained full-stack features.
+    """
+
+    result = parse_resume(resume_text)
+
+    assert len(result["experience"]) == 1
+    assert result["experience"][0]["company"] == "Skyfarer Academy"
+    assert result["experience"][0]["title"] == "Full Stack Software Engineer"
+
+def test_parse_resume_recognizes_core_competencies_heading():
+    resume_text = """
+    CORE COMPETENCIES
+
+    Python, Java, React, SQL, Docker
+    """
+
+    result = parse_resume(resume_text)
+
+    assert "Python" in result["skills"]
+    assert "Java" in result["skills"]
+    assert "React" in result["skills"]
+    assert "SQL" in result["skills"]
+    assert "Docker" in result["skills"]
+
+def test_extract_sections_recognizes_core_competencies():
+    text = """
+    CORE COMPETENCIES
+
+    Python, Java, React, SQL, Docker
+    """
+
+    sections = extract_sections(text)
+
+    assert "skills" in sections
+    assert "Python, Java, React, SQL, Docker" in sections["skills"]

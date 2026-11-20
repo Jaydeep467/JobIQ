@@ -46,6 +46,7 @@ SECTION_ALIASES = {
         "professional profile",
         "career objective",
         "objective",
+        "career summary",
     ],
     "education": [
         "education",
@@ -58,6 +59,7 @@ SECTION_ALIASES = {
         "professional experience",
         "employment history",
         "work history",
+        "employment",
     ],
     "projects": [
         "projects",
@@ -71,6 +73,7 @@ SECTION_ALIASES = {
         "technologies",
         "technical expertise",
         "technical proficiencies",
+        "core competencies",
     ],
     "certifications": [
         "certifications",
