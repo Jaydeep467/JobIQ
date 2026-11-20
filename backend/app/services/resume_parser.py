@@ -445,6 +445,43 @@ def parse_projects(projects_text: str) -> list[dict[str, str | list[str]]]:
 
     return projects
 
+def parse_certifications(
+    certifications_text: str,
+) -> list[dict[str, str]]:
+    """Extract certification names and issuers from resume text."""
+
+    if not certifications_text.strip():
+        return []
+
+    lines = normalize_text(certifications_text).splitlines()
+
+    certifications = []
+
+    for line in lines:
+        line = line.strip()
+
+        if not line:
+            continue
+
+        # Split certification name and issuer
+        parts = re.split(r"[—–|]", line, maxsplit=1)
+
+        if len(parts) == 2:
+            name = parts[0].strip()
+            issuer = parts[1].strip()
+        else:
+            name = line
+            issuer = ""
+
+        certifications.append(
+            {
+                "name": name,
+                "issuer": issuer,
+            }
+        )
+
+    return certifications
+
 def parse_resume(text: str) -> dict[str, Any]:
     """Produce an initial structured representation of a resume."""
     if not text or not text.strip():
@@ -461,7 +498,9 @@ def parse_resume(text: str) -> dict[str, Any]:
         ),
         "experience": parse_experience(sections.get("experience", "")),
         "projects": parse_projects(sections.get("projects", "")),
-        "certifications": sections.get("certifications", ""),
+        "certifications": parse_certifications(
+            sections.get("certifications", "")
+        ),
     }
 
 

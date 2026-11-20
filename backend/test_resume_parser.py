@@ -175,3 +175,67 @@ def test_parse_resume_extracts_project_with_pipe_separator():
     assert projects[0]["name"] == "SHOPFLOW"
     assert projects[0]["subtitle"] == "Full Stack E-Commerce Platform"
     assert "React" in projects[0]["technologies"]
+
+def test_parse_resume_extracts_certifications():
+    resume_text = """
+    CERTIFICATIONS
+
+    Data Scientist's Toolbox — Coursera
+    Data Structures with Python — Coursera
+    CS50 AI — Harvard
+    """
+
+    result = parse_resume(resume_text)
+
+    certifications = result["certifications"]
+
+    assert isinstance(certifications, list)
+    assert len(certifications) == 3
+
+    assert certifications[0]["name"] == "Data Scientist's Toolbox"
+    assert certifications[0]["issuer"] == "Coursera"
+
+    assert certifications[1]["name"] == "Data Structures with Python"
+    assert certifications[1]["issuer"] == "Coursera"
+
+    assert certifications[2]["name"] == "CS50 AI"
+    assert certifications[2]["issuer"] == "Harvard"
+
+def test_parse_resume_handles_certifications_without_issuer():
+    resume_text = """
+    CERTIFICATIONS
+
+    CS50 AI
+    Data Structures and Algorithms
+    AWS Cloud Practitioner
+    """
+
+    result = parse_resume(resume_text)
+
+    certifications = result["certifications"]
+
+    assert len(certifications) == 3
+
+    assert certifications[0]["name"] == "CS50 AI"
+    assert certifications[0]["issuer"] == ""
+
+    assert certifications[1]["name"] == "Data Structures and Algorithms"
+    assert certifications[1]["issuer"] == ""
+
+    assert certifications[2]["name"] == "AWS Cloud Practitioner"
+    assert certifications[2]["issuer"] == ""
+
+def test_parse_resume_handles_empty_certifications_section():
+    resume_text = """
+    CERTIFICATIONS
+
+    PROJECTS
+
+    SHOPFLOW — Full Stack E-Commerce Platform
+    React, TypeScript
+    Built an e-commerce application.
+    """
+
+    result = parse_resume(resume_text)
+
+    assert result["certifications"] == []
