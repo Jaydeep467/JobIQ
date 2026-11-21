@@ -36,6 +36,63 @@ SKILL_KEYWORDS = [
     "REST APIs",
     "Redis",
     "Kafka",
+    
+     # Frontend
+    "HTML",
+    "CSS",
+    "Tailwind CSS",
+    "Bootstrap",
+    "Vue.js",
+    "Angular",
+    "Redux",
+
+    # Backend & APIs
+    "Express.js",
+    "GraphQL",
+    "Microservices",
+    "WebSockets",
+
+    # Cloud & DevOps
+    "Microsoft Azure",
+    "Google Cloud Platform",
+    "CI/CD",
+    "GitHub Actions",
+    "Linux",
+    "Bash",
+    "Terraform",
+
+    # Databases & Data
+    "SQLite",
+    "DynamoDB",
+    "Elasticsearch",
+    "Apache Spark",
+    "Airflow",
+    "Data Engineering",
+    "Data Analysis",
+
+    # AI / ML
+    "Generative AI",
+    "Large Language Models",
+    "RAG",
+    "Computer Vision",
+    "Hugging Face",
+    "OpenAI API",
+
+    # Software Engineering
+    "Data Structures",
+    "Algorithms",
+    "Object-Oriented Programming",
+    "System Design",
+    "Software Engineering",
+    "Agile",
+    "Scrum",
+
+    # Tools
+    "Jira",
+    "Postman",
+    "Figma",
+    "Power BI",
+    "Excel",
 ]
 
 SECTION_ALIASES = {
@@ -154,15 +211,50 @@ def extract_sections(text: str) -> dict[str, str]:
 def extract_skills(text: str) -> list[str]:
     """Find known technology and skill keywords in the supplied text."""
     normalized = normalize_text(text).casefold()
-    found: list[str] = []
+
+    # Find every occurrence of every known skill
+    skill_matches = {}
 
     for skill in SKILL_KEYWORDS:
         pattern = rf"(?<!\w){re.escape(skill.casefold())}(?!\w)"
-        if re.search(pattern, normalized):
+        matches = list(re.finditer(pattern, normalized))
+
+        if matches:
+            skill_matches[skill] = matches
+
+    found: list[str] = []
+
+    for skill, matches in skill_matches.items():
+        # A skill match is ignored if it is contained inside a longer
+        # skill phrase. For example, CSS inside Tailwind CSS.
+        valid_matches = []
+
+        for match in matches:
+            is_part_of_longer_skill = False
+
+            for other_skill, other_matches in skill_matches.items():
+                if len(other_skill) <= len(skill):
+                    continue
+
+                for other_match in other_matches:
+                    if (
+                        other_match.start() <= match.start()
+                        and other_match.end() >= match.end()
+                    ):
+                        is_part_of_longer_skill = True
+                        break
+
+                if is_part_of_longer_skill:
+                    break
+
+            if not is_part_of_longer_skill:
+                valid_matches.append(match)
+
+        # Keep the skill if at least one independent occurrence exists
+        if valid_matches:
             found.append(skill)
 
     return found
-
 
 def parse_education(education_text: str) -> list[dict[str, str | None]]:
     """Split education text into individual degree records."""

@@ -1,5 +1,11 @@
 import pytest
-from app.services.resume_parser import parse_resume, normalize_text, extract_sections
+# from app.services.resume_parser import parse_resume, normalize_text, extract_sections
+from app.services.resume_parser import (
+    parse_resume,
+    normalize_text,
+    extract_sections,
+    extract_skills,
+)
 
 def test_normalize_text():
     text = "  Python   Developer \n\n React   Developer  "
@@ -374,3 +380,89 @@ def test_extract_sections_recognizes_common_heading_variations(
 
     assert expected_section in sections
     assert "Sample content for this section." in sections[expected_section]
+
+@pytest.mark.parametrize(
+    "text, expected",
+    [
+        # Case-insensitive matching
+        ("I use PYTHON and python.", ["Python"]),
+
+        # Java should not accidentally match JavaScript
+        ("I am a JavaScript developer.", ["JavaScript"]),
+        ("I use Java and JavaScript.", ["Java", "JavaScript"]),
+
+        # Duplicate skills should only appear once
+        ("Python Python Python Python", ["Python"]),
+
+        # Special characters
+        ("I know C++ and C#.", ["C++", "C#"]),
+
+        # Partial-word false positives
+        ("I enjoy Reactively building interfaces.", []),
+
+        # Multiple valid skills
+        (
+            "Python, React, PostgreSQL, and Docker are my tools.",
+            ["Python", "PostgreSQL", "React", "Docker"],
+        ),
+    ],
+)
+def test_extract_skills_handles_edge_cases(text, expected):
+    assert extract_skills(text) == expected
+
+@pytest.mark.parametrize(
+    "skill",
+    [
+        "HTML",
+        "CSS",
+        "Tailwind CSS",
+        "Bootstrap",
+        "Vue.js",
+        "Angular",
+        "Redux",
+        "Express.js",
+        "GraphQL",
+        "Microservices",
+        "WebSockets",
+        "Microsoft Azure",
+        "Google Cloud Platform",
+        "CI/CD",
+        "GitHub Actions",
+        "Linux",
+        "Bash",
+        "Terraform",
+        "SQLite",
+        "DynamoDB",
+        "Elasticsearch",
+        "Apache Spark",
+        "Airflow",
+        "Data Engineering",
+        "Data Analysis",
+        "Generative AI",
+        "Large Language Models",
+        "RAG",
+        "Computer Vision",
+        "Hugging Face",
+        "OpenAI API",
+        "Data Structures",
+        "Algorithms",
+        "Object-Oriented Programming",
+        "System Design",
+        "Software Engineering",
+        "Agile",
+        "Scrum",
+        "Jira",
+        "Postman",
+        "Figma",
+        "Power BI",
+        "Excel",
+    ],
+)
+def test_extract_skills_recognizes_expanded_skill_keywords(skill):
+    assert extract_skills(skill) == [skill]
+
+def test_extract_skills_does_not_extract_css_from_tailwind_css():
+    assert extract_skills("Tailwind CSS") == ["Tailwind CSS"]
+
+def test_extract_skills_detects_standalone_css_with_tailwind():
+    assert extract_skills("Tailwind CSS and CSS") == ["CSS", "Tailwind CSS"]
