@@ -36,8 +36,7 @@ SKILL_KEYWORDS = [
     "REST APIs",
     "Redis",
     "Kafka",
-    
-     # Frontend
+    # Frontend
     "HTML",
     "CSS",
     "Tailwind CSS",
@@ -45,13 +44,11 @@ SKILL_KEYWORDS = [
     "Vue.js",
     "Angular",
     "Redux",
-
     # Backend & APIs
     "Express.js",
     "GraphQL",
     "Microservices",
     "WebSockets",
-
     # Cloud & DevOps
     "Microsoft Azure",
     "Google Cloud Platform",
@@ -60,7 +57,6 @@ SKILL_KEYWORDS = [
     "Linux",
     "Bash",
     "Terraform",
-
     # Databases & Data
     "SQLite",
     "DynamoDB",
@@ -69,7 +65,6 @@ SKILL_KEYWORDS = [
     "Airflow",
     "Data Engineering",
     "Data Analysis",
-
     # AI / ML
     "Generative AI",
     "Large Language Models",
@@ -77,7 +72,6 @@ SKILL_KEYWORDS = [
     "Computer Vision",
     "Hugging Face",
     "OpenAI API",
-
     # Software Engineering
     "Data Structures",
     "Algorithms",
@@ -86,7 +80,6 @@ SKILL_KEYWORDS = [
     "Software Engineering",
     "Agile",
     "Scrum",
-
     # Tools
     "Jira",
     "Postman",
