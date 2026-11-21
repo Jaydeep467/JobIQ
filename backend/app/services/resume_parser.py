@@ -36,6 +36,7 @@ SKILL_KEYWORDS = [
     "REST APIs",
     "Redis",
     "Kafka",
+    "Artificial Intelligence",
     # Frontend
     "HTML",
     "CSS",
@@ -159,6 +160,17 @@ SECTION_ALIASES = {
     ],
 }
 
+SKILL_ALIASES = {
+    "JS": "JavaScript",
+    "TS": "TypeScript",
+    "ML": "Machine Learning",
+    "DL": "Deep Learning",
+    "AI": "Artificial Intelligence",
+    "GCP": "Google Cloud Platform",
+    "K8s": "Kubernetes",
+    "OOP": "Object-Oriented Programming",
+}
+
 def normalize_text(text: str) -> str:
     """Normalize whitespace while preserving section line breaks."""
     text = text.replace("\r\n", "\n").replace("\r", "\n")
@@ -202,24 +214,74 @@ def extract_sections(text: str) -> dict[str, str]:
 
 
 def extract_skills(text: str) -> list[str]:
-    """Find known technology and skill keywords in the supplied text."""
+    """Find known technology and skill keywords, including aliases."""
     normalized = normalize_text(text).casefold()
 
-    # Find every occurrence of every known skill
-    skill_matches = {}
+    # Include canonical skills and alias targets
+    all_skills = list(SKILL_KEYWORDS)
 
-    for skill in SKILL_KEYWORDS:
+    for canonical_skill in SKILL_ALIASES.values():
+        if canonical_skill not in all_skills:
+            all_skills.append(canonical_skill)
+
+    # Find canonical skill matches first
+    canonical_matches = {}
+
+    for skill in all_skills:
         pattern = rf"(?<!\w){re.escape(skill.casefold())}(?!\w)"
         matches = list(re.finditer(pattern, normalized))
 
         if matches:
-            skill_matches[skill] = matches
+            canonical_matches[skill] = matches
 
-    found: list[str] = []
+    # Find aliases separately
+    alias_matches = {}
 
+    for alias, canonical_skill in SKILL_ALIASES.items():
+        pattern = rf"(?<!\w){re.escape(alias.casefold())}(?!\w)"
+        matches = list(re.finditer(pattern, normalized))
+
+        if matches:
+            valid_matches = []
+
+            for match in matches:
+                overlaps_with_other_skill = False
+
+                for skill, skill_occurrences in canonical_matches.items():
+                    if skill == canonical_skill:
+                        continue
+
+                    for skill_match in skill_occurrences:
+                        # Check whether the alias occurs inside another skill
+                        if (
+                            match.start() < skill_match.end()
+                            and match.end() > skill_match.start()
+                        ):
+                            overlaps_with_other_skill = True
+                            break
+
+                    if overlaps_with_other_skill:
+                        break
+
+                if not overlaps_with_other_skill:
+                    valid_matches.append(match)
+
+            if valid_matches:
+                alias_matches.setdefault(canonical_skill, []).extend(valid_matches)
+
+    # Merge valid aliases with canonical matches
+    skill_matches = {}
+
+    for skill, matches in canonical_matches.items():
+        skill_matches[skill] = list(matches)
+
+    for skill, matches in alias_matches.items():
+        skill_matches.setdefault(skill, []).extend(matches)
+
+    found = []
+
+    # Suppress shorter skills contained inside longer skills
     for skill, matches in skill_matches.items():
-        # A skill match is ignored if it is contained inside a longer
-        # skill phrase. For example, CSS inside Tailwind CSS.
         valid_matches = []
 
         for match in matches:
@@ -243,7 +305,6 @@ def extract_skills(text: str) -> list[str]:
             if not is_part_of_longer_skill:
                 valid_matches.append(match)
 
-        # Keep the skill if at least one independent occurrence exists
         if valid_matches:
             found.append(skill)
 

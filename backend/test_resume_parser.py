@@ -466,3 +466,56 @@ def test_extract_skills_does_not_extract_css_from_tailwind_css():
 
 def test_extract_skills_detects_standalone_css_with_tailwind():
     assert extract_skills("Tailwind CSS and CSS") == ["CSS", "Tailwind CSS"]
+
+@pytest.mark.parametrize(
+    "alias,expected_skill",
+    [
+        ("JS", "JavaScript"),
+        ("javascript", "JavaScript"),
+        ("TS", "TypeScript"),
+        ("ML", "Machine Learning"),
+        ("DL", "Deep Learning"),
+        ("AI", "Artificial Intelligence"),
+        ("GCP", "Google Cloud Platform"),
+        ("K8s", "Kubernetes"),
+        ("OOP", "Object-Oriented Programming"),
+    ],
+)
+def test_extract_skills_recognizes_aliases(alias, expected_skill):
+    assert expected_skill in extract_skills(alias)
+
+def test_extract_skills_returns_canonical_name_for_alias():
+    skills = extract_skills("JS, TS, ML, GCP, K8s")
+
+    assert "JavaScript" in skills
+    assert "TypeScript" in skills
+    assert "Machine Learning" in skills
+    assert "Google Cloud Platform" in skills
+    assert "Kubernetes" in skills
+
+    assert "JS" not in skills
+    assert "TS" not in skills
+    assert "ML" not in skills
+    assert "GCP" not in skills
+    assert "K8s" not in skills
+
+def test_extract_skills_does_not_extract_js_from_vue_js():
+    assert extract_skills("Vue.js") == ["Vue.js"]
+
+
+def test_extract_skills_does_not_extract_js_from_express_js():
+    assert extract_skills("Express.js") == ["Express.js"]
+
+
+def test_extract_skills_does_not_extract_ai_from_generative_ai():
+    assert extract_skills("Generative AI") == ["Generative AI"]
+
+
+def test_extract_skills_extracts_alias_when_standalone():
+    skills = extract_skills("Vue.js, JS, Express.js, AI")
+
+    assert "Vue.js" in skills
+    assert "JavaScript" in skills
+    assert "Express.js" in skills
+    assert "Artificial Intelligence" in skills
+    assert "Generative AI" not in skills
