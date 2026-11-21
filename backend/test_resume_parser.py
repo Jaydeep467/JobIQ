@@ -310,3 +310,67 @@ def test_extract_sections_recognizes_core_competencies():
 
     assert "skills" in sections
     assert "Python, Java, React, SQL, Docker" in sections["skills"]
+
+def test_extract_sections_recognizes_career_summary():
+    text = """
+    CAREER SUMMARY
+
+    Full Stack Software Engineer with experience in Python,
+    React, Django, and AWS.
+    """
+
+    sections = extract_sections(text)
+
+    assert "summary" in sections
+    assert "Full Stack Software Engineer" in sections["summary"]
+
+@pytest.mark.parametrize(
+    "heading, expected_section",
+    [
+        ("ABOUT ME", "summary"),
+        ("CAREER SUMMARY", "summary"),
+        ("PERSONAL PROFILE", "summary"),
+        ("PERSONAL SUMMARY", "summary"),
+        ("EXECUTIVE SUMMARY", "summary"),
+
+        ("CORE COMPETENCIES", "skills"),
+        ("KEY SKILLS", "skills"),
+        ("CORE SKILLS", "skills"),
+        ("SKILL SET", "skills"),
+        ("TECHNOLOGY STACK", "skills"),
+        ("TOOLS & TECHNOLOGIES", "skills"),
+
+        ("EDUCATIONAL BACKGROUND", "education"),
+        ("ACADEMIC HISTORY", "education"),
+        ("EDUCATION & TRAINING", "education"),
+        ("QUALIFICATIONS", "education"),
+
+        ("EMPLOYMENT", "experience"),
+        ("EMPLOYMENT EXPERIENCE", "experience"),
+        ("CAREER HISTORY", "experience"),
+        ("RELEVANT EXPERIENCE", "experience"),
+        ("PROFESSIONAL WORK EXPERIENCE", "experience"),
+
+        ("SELECTED PROJECTS", "projects"),
+        ("PROJECT WORK", "projects"),
+        ("KEY PROJECTS", "projects"),
+        ("PROJECT PORTFOLIO", "projects"),
+
+        ("PROFESSIONAL CERTIFICATIONS", "certifications"),
+        ("LICENSES & CERTIFICATIONS", "certifications"),
+        ("CERTIFICATIONS & LICENSES", "certifications"),
+    ],
+)
+def test_extract_sections_recognizes_common_heading_variations(
+    heading, expected_section
+):
+    text = f"""
+    {heading}
+
+    Sample content for this section.
+    """
+
+    sections = extract_sections(text)
+
+    assert expected_section in sections
+    assert "Sample content for this section." in sections[expected_section]

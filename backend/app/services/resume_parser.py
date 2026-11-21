@@ -47,11 +47,19 @@ SECTION_ALIASES = {
         "career objective",
         "objective",
         "career summary",
+        "about me",
+        "personal profile",
+        "personal summary",
+        "executive summary",
     ],
     "education": [
         "education",
         "academic background",
         "academic qualifications",
+        "educational background",
+        "academic history",
+        "education & training",
+        "qualifications",
     ],
     "experience": [
         "experience",
@@ -60,12 +68,20 @@ SECTION_ALIASES = {
         "employment history",
         "work history",
         "employment",
+        "employment experience",
+        "career history",
+        "relevant experience",
+        "professional work experience",
     ],
     "projects": [
         "projects",
         "personal projects",
         "academic projects",
         "project experience",
+        "selected projects",
+        "project work",
+        "key projects",
+        "project portfolio",
     ],
     "skills": [
         "skills",
@@ -74,6 +90,11 @@ SECTION_ALIASES = {
         "technical expertise",
         "technical proficiencies",
         "core competencies",
+        "key skills",
+        "core skills",
+        "skill set",
+        "technology stack",
+        "tools & technologies",
     ],
     "certifications": [
         "certifications",
@@ -82,9 +103,11 @@ SECTION_ALIASES = {
         "certificates",
         "activities",
         "awards and certifications",
+        "professional certifications",
+        "licenses & certifications",
+        "certifications & licenses",
     ],
 }
-
 
 def normalize_text(text: str) -> str:
     """Normalize whitespace while preserving section line breaks."""
