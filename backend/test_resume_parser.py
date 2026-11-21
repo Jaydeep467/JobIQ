@@ -5,6 +5,7 @@ from app.services.resume_parser import (
     normalize_text,
     extract_sections,
     extract_skills,
+    extract_contact_info,
 )
 
 def test_normalize_text():
@@ -519,3 +520,47 @@ def test_extract_skills_extracts_alias_when_standalone():
     assert "Express.js" in skills
     assert "Artificial Intelligence" in skills
     assert "Generative AI" not in skills
+
+def test_extract_contact_info_extracts_email():
+    text = "Contact: jaydeep.patil@example.com"
+
+    result = extract_contact_info(text)
+
+    assert result["email"] == "jaydeep.patil@example.com"
+
+
+def test_extract_contact_info_extracts_phone():
+    text = "Phone: +1 (555) 123-4567"
+
+    result = extract_contact_info(text)
+
+    assert result["phone"] == "+1 (555) 123-4567"
+
+
+def test_extract_contact_info_extracts_linkedin():
+    text = "LinkedIn: https://www.linkedin.com/in/jaydeep-patil"
+
+    result = extract_contact_info(text)
+
+    assert result["linkedin"] == "https://www.linkedin.com/in/jaydeep-patil"
+
+
+def test_extract_contact_info_extracts_github():
+    text = "GitHub: https://github.com/Jaydeep467"
+
+    result = extract_contact_info(text)
+
+    assert result["github"] == "https://github.com/Jaydeep467"
+
+
+def test_extract_contact_info_handles_missing_fields():
+    text = "Experienced software engineer with Python skills."
+
+    result = extract_contact_info(text)
+
+    assert result == {
+        "email": None,
+        "phone": None,
+        "linkedin": None,
+        "github": None,
+    }

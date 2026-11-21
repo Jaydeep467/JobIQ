@@ -182,6 +182,45 @@ def normalize_text(text: str) -> str:
 
     return "\n".join(lines).strip()
 
+def extract_contact_info(text: str) -> dict[str, str | None]:
+    """Extract email, phone, LinkedIn, and GitHub from resume text."""
+
+    normalized = normalize_text(text)
+
+    # Email
+    email_match = re.search(
+        r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b",
+        normalized,
+    )
+
+    # Phone number
+    phone_match = re.search(
+        r"(?<!\w)(?:\+\d{1,3}[\s.-]?)?"
+        r"(?:\(?\d{3}\)?[\s.-]?)?"
+        r"\d{3}[\s.-]?\d{4}(?!\w)",
+        normalized,
+    )
+
+    # LinkedIn
+    linkedin_match = re.search(
+        r"(?:https?://)?(?:www\.)?linkedin\.com/in/[A-Za-z0-9_-]+/?",
+        normalized,
+        re.IGNORECASE,
+    )
+
+    # GitHub
+    github_match = re.search(
+        r"(?:https?://)?(?:www\.)?github\.com/[A-Za-z0-9_-]+/?",
+        normalized,
+        re.IGNORECASE,
+    )
+
+    return {
+        "email": email_match.group(0) if email_match else None,
+        "phone": phone_match.group(0) if phone_match else None,
+        "linkedin": linkedin_match.group(0) if linkedin_match else None,
+        "github": github_match.group(0) if github_match else None,
+    }
 
 def extract_sections(text: str) -> dict[str, str]:
     """Extract common resume sections using heading-based boundaries."""
