@@ -195,9 +195,11 @@ def extract_contact_info(text: str) -> dict[str, str | None]:
 
     # Phone number
     phone_match = re.search(
-        r"(?<!\w)(?:\+\d{1,3}[\s.-]?)?"
-        r"(?:\(?\d{3}\)?[\s.-]?)?"
-        r"\d{3}[\s.-]?\d{4}(?!\w)",
+        r"(?<!\w)"
+        r"(?:\+\d{1,3}[\s.-]?)?"
+        r"(?:\(?\d{2,4}\)?[\s.-]?)?"
+        r"\d{3,5}[\s.-]?\d{4,5}"
+        r"(?!\w)",
         normalized,
     )
 
@@ -712,6 +714,7 @@ def parse_resume(text: str) -> dict[str, Any]:
         "certifications": parse_certifications(
             sections.get("certifications", "")
         ),
+        "contact": extract_contact_info(normalized_text),
     }
 
 

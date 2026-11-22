@@ -564,3 +564,89 @@ def test_extract_contact_info_handles_missing_fields():
         "linkedin": None,
         "github": None,
     }
+
+def test_parse_resume_includes_contact_info():
+    text = """
+    Jaydeep Patil
+    jaydeep.patil@example.com
+    +1 (555) 123-4567
+    https://linkedin.com/in/jaydeep-patil
+    https://github.com/Jaydeep467
+
+    SUMMARY
+    Software Engineer with Python experience.
+
+    SKILLS
+    Python, JavaScript, React
+
+    EDUCATION
+    Arizona State University
+    Master of Science in Computer Science
+    """
+
+    result = parse_resume(text)
+
+    assert result["contact"] == {
+        "email": "jaydeep.patil@example.com",
+        "phone": "+1 (555) 123-4567",
+        "linkedin": "https://linkedin.com/in/jaydeep-patil",
+        "github": "https://github.com/Jaydeep467",
+    }
+
+
+def test_parse_resume_contact_info_handles_missing_fields():
+    text = """
+    SUMMARY
+    Experienced software engineer.
+
+    SKILLS
+    Python, Java
+    """
+
+    result = parse_resume(text)
+
+    assert result["contact"] == {
+        "email": None,
+        "phone": None,
+        "linkedin": None,
+        "github": None,
+    }
+
+def test_extract_contact_info_extracts_indian_phone():
+    text = "Phone: +91 98765 43210"
+    result = extract_contact_info(text)
+
+    assert result["phone"] == "+91 98765 43210"
+
+
+def test_extract_contact_info_extracts_linkedin_without_scheme():
+    text = "linkedin.com/in/jaydeep-patil"
+    result = extract_contact_info(text)
+
+    assert result["linkedin"] == "linkedin.com/in/jaydeep-patil"
+
+
+def test_extract_contact_info_extracts_github_without_scheme():
+    text = "github.com/Jaydeep467"
+    result = extract_contact_info(text)
+
+    assert result["github"] == "github.com/Jaydeep467"
+
+def test_extract_contact_info_removes_trailing_url_punctuation():
+    text = """
+    LinkedIn: linkedin.com/in/jaydeep-patil.
+    GitHub: github.com/Jaydeep467,
+    """
+
+    result = extract_contact_info(text)
+
+    assert result["linkedin"] == "linkedin.com/in/jaydeep-patil"
+    assert result["github"] == "github.com/Jaydeep467"
+
+
+def test_extract_contact_info_preserves_phone_format():
+    text = "Phone: +91-98765-43210"
+
+    result = extract_contact_info(text)
+
+    assert result["phone"] == "+91-98765-43210"
