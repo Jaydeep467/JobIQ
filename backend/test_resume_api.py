@@ -215,6 +215,11 @@ def test_upload_resume_returns_parsed_data(monkeypatch, tmp_path):
 
     assert data["filename"] == "resume.pdf"
     assert data["parsed_data"] == parsed_resume
+    
+    saved_resume = fake_db.added_objects[-1]
+
+    assert saved_resume.extracted_text == "Raw resume text"
+    assert saved_resume.parsed_data == parsed_resume
 
 def test_upload_resume_with_empty_extracted_text_returns_400(
     monkeypatch,

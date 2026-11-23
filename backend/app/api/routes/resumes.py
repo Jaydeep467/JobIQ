@@ -58,6 +58,7 @@ async def upload_resume(
         filename=file.filename or "resume.pdf",
         file_path=file_path,
         extracted_text=extracted_text,
+        parsed_data=parsed_data,
     )
 
     db.add(resume)
