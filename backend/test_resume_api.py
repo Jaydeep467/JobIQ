@@ -162,3 +162,86 @@ def test_upload_unsupported_file_returns_400(monkeypatch, tmp_path):
 
     assert response.status_code == 400
     assert response.json()["detail"] == "Only PDF and DOCX files are supported"
+
+def test_upload_resume_returns_parsed_data(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        resume_service,
+        "RESUME_STORAGE_DIR",
+        tmp_path,
+    )
+
+    monkeypatch.setattr(
+        resume_routes,
+        "extract_text_from_pdf",
+        lambda file_path: "Raw resume text",
+    )
+
+    parsed_resume = {
+        "summary": "Software Engineer",
+        "skills": ["Python", "React"],
+        "education": [],
+        "experience": [],
+        "projects": [],
+        "certifications": [],
+        "contact": {
+            "email": "test@example.com",
+            "phone": None,
+            "linkedin": None,
+            "github": None,
+        },
+    }
+
+    monkeypatch.setattr(
+        resume_routes,
+        "parse_resume",
+        lambda text: parsed_resume,
+        raising=False,
+    )
+
+    response = client.post(
+        "/resumes/upload",
+        files={
+            "file": (
+                "resume.pdf",
+                b"fake pdf content",
+                "application/pdf",
+            )
+        },
+    )
+
+    assert response.status_code == 201
+
+    data = response.json()
+
+    assert data["filename"] == "resume.pdf"
+    assert data["parsed_data"] == parsed_resume
+
+def test_upload_resume_with_empty_extracted_text_returns_400(
+    monkeypatch,
+    tmp_path,
+):
+    monkeypatch.setattr(
+        resume_service,
+        "RESUME_STORAGE_DIR",
+        tmp_path,
+    )
+
+    monkeypatch.setattr(
+        resume_routes,
+        "extract_text_from_pdf",
+        lambda file_path: "",
+    )
+
+    response = client.post(
+        "/resumes/upload",
+        files={
+            "file": (
+                "empty_resume.pdf",
+                b"fake pdf content",
+                "application/pdf",
+            )
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Resume text cannot be empty"

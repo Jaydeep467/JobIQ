@@ -9,6 +9,7 @@ from app.services.pdf_service import extract_text_from_pdf
 from app.services.resume_service import save_resume_file
 from pathlib import Path
 from app.services.docx_service import extract_text_from_docx
+from app.services.resume_parser import parse_resume
 
 router = APIRouter(
     prefix="/resumes",
@@ -38,6 +39,8 @@ async def upload_resume(
 
         else:
             raise ValueError("Unsupported resume file type")
+        
+        parsed_data = parse_resume(extracted_text)
 
     except ValueError as exc:
         raise HTTPException(
@@ -65,6 +68,7 @@ async def upload_resume(
         "id": resume.id,
         "filename": resume.filename,
         "created_at": resume.created_at,
+        "parsed_data": parsed_data,
     }
 
 
