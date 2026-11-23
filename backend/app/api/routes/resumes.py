@@ -7,6 +7,8 @@ from app.models.resume import Resume
 from app.models.user import User
 from app.services.pdf_service import extract_text_from_pdf
 from app.services.resume_service import save_resume_file
+from pathlib import Path
+from app.services.docx_service import extract_text_from_docx
 
 router = APIRouter(
     prefix="/resumes",
@@ -22,10 +24,21 @@ async def upload_resume(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+    ):
     try:
         file_path = await save_resume_file(file)
-        extracted_text = extract_text_from_pdf(file_path)
+
+        extension = Path(file_path).suffix.lower()
+
+        if extension == ".pdf":
+            extracted_text = extract_text_from_pdf(file_path)
+
+        elif extension == ".docx":
+            extracted_text = extract_text_from_docx(file_path)
+
+        else:
+            raise ValueError("Unsupported resume file type")
+
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
