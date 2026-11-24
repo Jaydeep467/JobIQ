@@ -167,3 +167,22 @@ def test_match_resume_to_job_does_not_duplicate_skills():
     assert result["matched_skills"] == ["JavaScript"]
     assert result["missing_skills"] == []
     assert result["match_percentage"] == 100.0
+
+def test_match_resume_to_job_returns_skill_statistics():
+    resume_data = {
+        "skills": ["Python", "FastAPI", "Docker"],
+    }
+
+    job_description = """
+    Required skills: Python, FastAPI, Docker, AWS, Kubernetes.
+    """
+
+    result = match_resume_to_job(
+        resume_data=resume_data,
+        job_description=job_description,
+    )
+
+    assert result["total_skills"] == 5
+    assert result["matched_count"] == 3
+    assert result["missing_count"] == 2
+    assert result["match_percentage"] == 60.0

@@ -90,10 +90,17 @@ def match_resume_to_job(
         else 0.0
     )
 
+    total_skills = len(job_skills)
+    matched_count = len(matched_skills)
+    missing_count = len(missing_skills)
+
     return {
         "matched_skills": matched_skills,
         "missing_skills": missing_skills,
         "match_percentage": round(match_percentage, 2),
+        "total_skills": total_skills,
+        "matched_count": matched_count,
+        "missing_count": missing_count,
     }
 
 def normalize_skill(skill: str) -> str:
