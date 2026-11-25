@@ -10,6 +10,8 @@ from app.services.resume_service import save_resume_file
 from pathlib import Path
 from app.services.docx_service import extract_text_from_docx
 from app.services.resume_parser import parse_resume
+from app.schemas.job_match import JobMatchRequest
+from app.services.job_matcher import match_resume_to_job
 
 router = APIRouter(
     prefix="/resumes",
@@ -124,3 +126,34 @@ def get_resume(
         "updated_at": resume.updated_at,
     }
 
+@router.post("/{resume_id}/match")
+def match_resume(
+    resume_id: int,
+    request: JobMatchRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    resume = (
+        db.query(Resume)
+        .filter(
+            Resume.id == resume_id,
+            Resume.user_id == current_user.id,
+        )
+        .first()
+    )
+
+    if resume is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resume not found",
+        )
+
+    match_result = match_resume_to_job(
+        resume.parsed_data,
+        request.job_description,
+    )
+
+    return {
+        "resume_id": resume.id,
+        **match_result,
+    }

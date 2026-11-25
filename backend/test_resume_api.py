@@ -250,3 +250,106 @@ def test_upload_resume_with_empty_extracted_text_returns_400(
 
     assert response.status_code == 400
     assert response.json()["detail"] == "Resume text cannot be empty"
+
+def test_match_resume_to_job(monkeypatch):
+    parsed_resume = {
+        "skills": ["Python", "FastAPI", "React"],
+    }
+
+    resume = Resume(
+        id=1,
+        user_id=123,
+        filename="resume.pdf",
+        file_path="fake/path/resume.pdf",
+        extracted_text="Fake resume text",
+        parsed_data=parsed_resume,
+    )
+
+    # Fake the database query
+    class FakeQuery:
+        def filter(self, *args, **kwargs):
+            return self
+
+        def first(self):
+            return resume
+
+    monkeypatch.setattr(
+        fake_db,
+        "query",
+        lambda model: FakeQuery(),
+        raising=False,
+    )
+
+    expected_match_result = {
+        "matched_skills": ["Python", "FastAPI"],
+        "missing_skills": ["AWS", "Docker"],
+        "match_percentage": 50.0,
+        "total_skills": 4,
+        "matched_count": 2,
+        "missing_count": 2,
+    }
+
+    # Mock the matching service
+    monkeypatch.setattr(
+        resume_routes,
+        "match_resume_to_job",
+        lambda parsed_data, job_description: expected_match_result,
+        raising=False,
+    )
+
+    response = client.post(
+        "/resumes/1/match",
+        json={
+            "job_description": (
+                "We are looking for a Python and FastAPI developer "
+                "with AWS and Docker experience."
+            ),
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["resume_id"] == 1
+    assert data["matched_skills"] == ["Python", "FastAPI"]
+    assert data["missing_skills"] == ["AWS", "Docker"]
+    assert data["match_percentage"] == 50.0
+    assert data["total_skills"] == 4
+    assert data["matched_count"] == 2
+    assert data["missing_count"] == 2
+
+def test_match_resume_not_found(monkeypatch):
+    class FakeQuery:
+        def filter(self, *args, **kwargs):
+            return self
+
+        def first(self):
+            return None
+
+    monkeypatch.setattr(
+        fake_db,
+        "query",
+        lambda model: FakeQuery(),
+        raising=False,
+    )
+
+    response = client.post(
+        "/resumes/999/match",
+        json={
+            "job_description": "Python developer with FastAPI experience",
+        },
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Resume not found"
+
+def test_match_resume_with_empty_job_description_returns_422():
+    response = client.post(
+        "/resumes/1/match",
+        json={
+            "job_description": "   ",
+        },
+    )
+
+    assert response.status_code == 422
