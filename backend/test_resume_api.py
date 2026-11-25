@@ -353,3 +353,13 @@ def test_match_resume_with_empty_job_description_returns_422():
     )
 
     assert response.status_code == 422
+
+def test_match_resume_with_oversized_job_description_returns_422():
+    response = client.post(
+        "/resumes/1/match",
+        json={
+            "job_description": "A" * 50001,
+        },
+    )
+
+    assert response.status_code == 422
