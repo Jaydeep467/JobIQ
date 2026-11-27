@@ -1,4 +1,4 @@
-import pymupdf
+from reportlab.pdfgen import canvas
 import pytest
 
 from app.services.resume_parser import parse_resume
@@ -6,11 +6,16 @@ from app.services.pdf_service import extract_text_from_pdf
 
 
 def create_test_pdf(file_path, text):
-    document = pymupdf.open()
-    page = document.new_page()
-    page.insert_text((72, 72), text)
-    document.save(file_path)
-    document.close()
+    pdf = canvas.Canvas(str(file_path))
+
+    text_object = pdf.beginText(72, 750)
+    text_object.setLeading(18)
+
+    for line in text.splitlines():
+        text_object.textLine(line)
+
+    pdf.drawText(text_object)
+    pdf.save()
 
 
 def test_extract_text_from_pdf_extracts_text(tmp_path):
@@ -26,10 +31,9 @@ def test_extract_text_from_pdf_extracts_text(tmp_path):
 def test_extract_text_from_pdf_handles_empty_pdf(tmp_path):
     pdf_path = tmp_path / "empty.pdf"
 
-    document = pymupdf.open()
-    document.new_page()
-    document.save(pdf_path)
-    document.close()
+    pdf = canvas.Canvas(str(pdf_path))
+    pdf.showPage()
+    pdf.save()
 
     result = extract_text_from_pdf(str(pdf_path))
 

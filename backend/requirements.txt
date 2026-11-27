@@ -9,3 +9,5 @@ httpx
 python-jose[cryptography]
 email-validator
 python-docx
+pdfplumber
+reportlab

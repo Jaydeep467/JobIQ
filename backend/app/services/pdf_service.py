@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import pymupdf
+import pdfplumber
 
 
 def extract_text_from_pdf(file_path: str) -> str:
@@ -9,18 +9,13 @@ def extract_text_from_pdf(file_path: str) -> str:
     if not path.exists():
         raise FileNotFoundError(f"PDF file not found: {file_path}")
 
-    document = pymupdf.open(path)
+    pages = []
 
-    try:
-        pages = []
-
-        for page in document:
-            text = page.get_text()
+    with pdfplumber.open(path) as pdf:
+        for page in pdf.pages:
+            text = page.extract_text()
 
             if text:
                 pages.append(text.strip())
 
-        return "\n\n".join(pages).strip()
-
-    finally:
-        document.close()
+    return "\n\n".join(pages).strip()
